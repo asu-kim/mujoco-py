@@ -18,7 +18,9 @@ import MuJoCoAuto from "MuJoCoAutoHardware.lf"
  *
  * @author Edward A. Lee
  */
-reactor MuJoCoCarAuto(model_file = {= lf.source_directory() + "/models/car.xml" =})
+reactor MuJoCoCarAuto(
+    model_file = {= lf.source_directory() + "/models/car.xml" =},
+    perception_period = 100 ms)
     extends MuJoCoAuto {
   preamble {=
     import mujoco
@@ -35,6 +37,7 @@ reactor MuJoCoCarAuto(model_file = {= lf.source_directory() + "/models/car.xml" 
   output right_car_present
   output cross_left_car_present
   output cross_right_car_present
+  output distance_from_start
 
   state forward_index = 0      # Actuator indexes.
   state turn_index = 0
@@ -50,6 +53,7 @@ reactor MuJoCoCarAuto(model_file = {= lf.source_directory() + "/models/car.xml" 
   state right_lane_car_id = -1
   state cross_left_car_id = -1
   state cross_right_car_id = -1
+  state last_perception_ns = -1
 
   reaction(startup) {=
     self.forward_index = mujoco.mj_name2id(self.context.m, mujoco.mjtObj.mjOBJ_ACTUATOR, "forward")
@@ -122,38 +126,48 @@ reactor MuJoCoCarAuto(model_file = {= lf.source_directory() + "/models/car.xml" 
     self.remaining_dist = rd.value
   =}
 
-  reaction(physics_timer) -> right_force, left_force, other_car_present, front_car_present, right_car_present, cross_left_car_present, cross_right_car_present {=
+  reaction(physics_timer) -> right_force, left_force, other_car_present, front_car_present, right_car_present, cross_left_car_present, cross_right_car_present, distance_from_start {=
     right_force.set(float(self.context.d.sensordata[self.right_address]))
     left_force.set(float(self.context.d.sensordata[self.left_address]))
+    if self.car_body_id >= 0:
+      distance_from_start.set(max(0.0, float(self.context.d.xpos[self.car_body_id][0]) * 100.0))
 
-    def body_pos(body_id):
-      if body_id < 0:
-        return None
-      return self.context.d.xpos[body_id]
-
-    def near_body(body_id, longitudinal_min, longitudinal_max, lateral_max):
-      car_pos = body_pos(self.car_body_id)
-      other_pos = body_pos(body_id)
-      if car_pos is None or other_pos is None:
-        return 0
-      dx = float(other_pos[0] - car_pos[0])
-      dy = float(other_pos[1] - car_pos[1])
-      return int(longitudinal_min <= dx <= longitudinal_max and abs(dy) <= lateral_max)
-
-    front_present = 0
-    right_present = int(
-      near_body(self.passing_red_car_id, -1.0, 3.0, 0.9)
-      or near_body(self.right_lane_car_id, -1.0, 3.0, 0.9)
+    now_ns = lf.time.logical_elapsed()
+    should_emit_perception = (
+      self.last_perception_ns < 0
+      or now_ns - self.last_perception_ns >= self.perception_period
     )
-    cross_left_present = near_body(self.cross_left_car_id, -2.5, 2.5, 2.5)
-    cross_right_present = near_body(self.cross_right_car_id, -2.5, 2.5, 2.5)
-    other_present = int(bool(front_present or right_present or cross_left_present or cross_right_present))
+    if should_emit_perception:
+      self.last_perception_ns = now_ns
 
-    front_car_present.set(front_present)
-    right_car_present.set(right_present)
-    cross_left_car_present.set(cross_left_present)
-    cross_right_car_present.set(cross_right_present)
-    other_car_present.set(other_present)
+      def body_pos(body_id):
+        if body_id < 0:
+          return None
+        return self.context.d.xpos[body_id]
+
+      def near_body(body_id, longitudinal_min, longitudinal_max, lateral_max):
+        car_pos = body_pos(self.car_body_id)
+        other_pos = body_pos(body_id)
+        if car_pos is None or other_pos is None:
+          return 0
+        dx = float(other_pos[0] - car_pos[0])
+        dy = float(other_pos[1] - car_pos[1])
+        return int(longitudinal_min <= dx <= longitudinal_max and abs(dy) <= lateral_max)
+
+      front_present = 0
+      right_present = int(
+        near_body(self.passing_red_car_id, -1.0, 3.0, 0.9)
+        or near_body(self.right_lane_car_id, -1.0, 3.0, 0.9)
+      )
+      cross_left_present = near_body(self.cross_left_car_id, -2.5, 2.5, 2.5)
+      cross_right_present = near_body(self.cross_right_car_id, -2.5, 2.5, 2.5)
+      other_present = int(bool(front_present or right_present or cross_left_present or cross_right_present))
+
+      front_car_present.set(front_present)
+      right_car_present.set(right_present)
+      cross_left_car_present.set(cross_left_present)
+      cross_right_car_present.set(cross_right_present)
+      other_car_present.set(other_present)
 
     speed_cmd = (self.context.d.ctrl[self.forward_index]) * 3.6
     self.overlay_text = [
