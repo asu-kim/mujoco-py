@@ -17,8 +17,8 @@ target Python {
 import MuJoCoAdvance from "lib/MuJoCoAdvance.lf"
 
 preamble {=
-  import mujoco # FIXME: Why is this needed? The above import should inherit this.
-  from mujoco.glfw import glfw
+  import mujoco
+  from mujoco.glfw import glfw # For keyboard input.
 =}
 
 main reactor(period = 16666667 ns) {
