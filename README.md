@@ -51,3 +51,6 @@ Then import the library reactors. For example:
 ```
 import MuJoCoAuto from <mujoco-py>
 ```
+## Zenodo DOI badge
+
+[DOI](https://doi.org/10.5281/zenodo.21727681)
