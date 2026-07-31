@@ -19,6 +19,9 @@ python3 -m pip install mujoco
 * [MuJoCoAuto](src/lib/MuJoCoAuto.lf) extends [MuJoCoBase](src/lib/MuJoCoBase.lf): Base class that automatically advances the simulation and outputs a tick for each step. This separates the updating of the scene, which is driven by a periodic timer. This refers to the [hello](src/models/hello.xml) basic demo model, which has a box and a floor.
 * [MuJoCoCar](src/lib/MuJoCoCar.lf) extends [MuJoCoAdvance](src/lib/MuJoCoAdvance.lf): Simulator for the [car](src/models/car.xml) basic demo model, providing a two-wheel vehicle and keyboard controlled driving. This version actively controls the simulator advance. 
 * [MuJoCoCarAuto](src/lib/MuJoCoCarAuto.lf) extends [MuJoCoAuto](src/lib/MuJoCoAuto.lf): Simulator for the [car](src/models/car.xml) basic demo model, providing a two-wheel vehicle and keyboard controlled driving. This version lets the simulator advance automatically.
+* [MuJoCoBaseHardware](src/lib/MuJoCoBaseHardware.lf): Hardware-integration version of [MuJoCoBase](src/lib/MuJoCoBase.lf), providing the MuJoCo viewer and overlay display for the agentic driving coach prototype. 
+* [MuJoCoAutoHardware](src/lib/MuJoCoAutoHardware.lf) extends [MuJoCoBaseHardware](src/lib/MuJoCoBaseHardware.lf): Hardware-integration base class that automatically advances the simulation using a configurable simulation step and periodically updates the display for the agentic driving coach prototype.
+* [MuJoCoCarAutoHardware](src/lib/MuJoCoCarAutoHardware.lf) extends [MuJoCoAutoHardware](src/lib/MuJoCoAutoHardware.lf): Hardware-integrated simulator for the [car](src/models/car.xml) model used by the agentic driving coach prototype, providing vehicle controls, camera switching, display information, distance tracking, and surrounding-vehicle outputs.
 
 ## Demos
 
