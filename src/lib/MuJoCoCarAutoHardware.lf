@@ -1,7 +1,7 @@
 /** @file Reactor for the basic car demonstrator in MuJoCo using the auto-advance version. */
 target Python {
   keepalive: true,
-  files: ["../models/car.xml"]
+  files: ["../models/car-hardware.xml"]
 }
 
 import MuJoCoAuto from "MuJoCoAutoHardware.lf"
@@ -12,14 +12,14 @@ import MuJoCoAuto from "MuJoCoAutoHardware.lf"
  * See [README.md](../README.md) for prerequisites and installation instructions.
  *
  * This reactor wraps the basic car demonstration model distributed with MuJoCo. It provides inputs
- * to control the two actuators defined in the [XML model file](../models/car.xml) and outputs that
+ * to control the two actuators defined in the [XML model file](../models/car-hardware.xml) and outputs that
  * report the sensor data from said model. The version uses the auto-advancing version of the base
  * class.
  *
  * @author Edward A. Lee
  */
 reactor MuJoCoCarAuto(
-    model_file = {= lf.source_directory() + "/models/car.xml" =},
+    model_file = {= lf.source_directory() + "/models/car-hardware.xml" =},
     perception_period = 100 ms)
     extends MuJoCoAuto {
   preamble {=
